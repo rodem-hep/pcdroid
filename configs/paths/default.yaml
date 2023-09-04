@@ -1,0 +1,5 @@
+# full_path will be created by hydra if it doesnt exist
+data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+output_dir: ${paths.root_dir}
+root_dir: ${oc.env:PROJECT_ROOT}
+full_path: ${paths.output_dir}/${project_name}/${network_name}/

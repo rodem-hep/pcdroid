@@ -1,0 +1,36 @@
+# @package _global_
+
+trainer:
+  max_epochs: 300
+  gradient_clip_val: 5
+  check_val_every_n_epoch: 10
+
+defaults:
+  - override /model: flow.yaml
+
+datamodule:
+  loader_kwargs:
+    batch_size: 1024
+    num_workers: 0
+  data_conf:
+    jetnet_config:
+      num_particles: 150
+      jet_type:
+        - g
+        - q
+        - t
+        - w
+        - z
+      jet_features: # The high level features to model!
+        - pt
+        - eta
+        - mass
+        - num_particles
+        - type # Must be last if present for saving!!!!
+
+model:
+  gen_ctxt_split: 4
+  int_dims: [False, False, False, True]
+
+project_name: new_models
+network_name: new_flow

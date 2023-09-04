@@ -1,0 +1,44 @@
+_target_: src.models.consistency.ConsistencyDroid
+
+teacher_checkpoint: ${paths.root_dir}/models/paper_models/pcdroid/checkpoints/best.ckpt
+
+loss_name:
+  _target_: src.loss.MaskedLossWrap
+  _partial_: True
+  loss_fn:
+    _target_: torch.nn.MSELoss
+    _partial_: True
+    reduction: none
+
+min_sigma: 1.0e-5
+max_sigma: 80
+ema_sync: 0.99
+n_gen_steps: 3
+
+# Sampler and sigma function to determine the adjacent points on the ODE
+sampler_function:
+  _target_: src.utils.diffusion.one_step_heun
+  _partial_: True
+
+sigma_function:
+  _target_: src.utils.diffusion.get_sigmas_karras
+  _partial_: True
+  n_steps: 30
+  rho: 7
+
+# Full configuration for the model optimizer
+optimizer:
+  _target_: torch.optim.RAdam
+  _partial_: true
+  lr: 1.0e-4
+  weight_decay: 0
+
+# Config dicts to pass to utils and pytorch lightning
+sched_config:
+  utils:
+    name: warmup
+    num_steps: 100
+  lightning:
+    monitor: valid/total_loss
+    interval: step
+    frequency: 1

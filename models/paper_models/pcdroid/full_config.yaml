@@ -1,0 +1,147 @@
+seed: 12345
+project_name: pc_jedi
+network_name: paper_model_150
+ckpt_path: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150/checkpoints/last-v2.ckpt
+precision: medium
+compile: null
+full_resume: false
+trainer:
+  _target_: pytorch_lightning.Trainer
+  min_epochs: 1
+  max_epochs: 9999
+  enable_progress_bar: true
+  accelerator: auto
+  devices: auto
+  gradient_clip_val: 10
+  precision: 16-mixed
+  check_val_every_n_epoch: 50
+  default_root_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150/
+model:
+  _target_: src.models.diffusion.TransformerDiffusionGenerator
+  data_dims: [3, 10, 150]
+  max_sigma: 80
+  min_sigma: 1.0e-05
+  ema_sync: 0.999
+  p_mean: -1.2
+  p_std: 1.2
+  sampler_function:
+    _target_: src.utils.diffusion.sample_heun
+    _partial_: true
+  sigma_function:
+    _target_: src.utils.diffusion.get_sigmas_karras
+    _partial_: true
+    n_steps: 50
+    rho: 7
+  cosine_config:
+    outp_dim: 16
+    frequency_scaling: exponential
+  normaliser_config:
+    max_n: 2000000
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.0001
+    weight_decay: 0
+  sched_config:
+    utils:
+      name: warmup
+      num_steps: 50000
+    lightning:
+      monitor: valid/noise_loss
+      interval: step
+      frequency: 1
+  architecture:
+    _target_: src.utils.transformers.FullTransformerEncoder
+    _partial_: true
+    node_embd_config:
+      act_h: lrlu
+      nrm: layer
+    ctxt_embd_config:
+      outp_dim: 64
+      act_h: lrlu
+      nrm: layer
+    te_config:
+      model_dim: 256
+      num_layers: 3
+      mha_config:
+        num_heads: 16
+        init_zeros: true
+        do_layer_norm: true
+      dense_config:
+        act_h: lrlu
+        nrm: layer
+        output_init_zeros: true
+    outp_embd_config:
+      act_h: lrlu
+      nrm: layer
+      output_init_zeros: true
+  loss_name: mse
+
+datamodule:
+  _target_: src.datamodules.jet_net.JetNetDataModule
+  data_conf:
+    log_squash_pt: true
+    high_as_context: true
+    n_jets: null
+    one_hot_last: true
+    jetnet_config:
+      jet_type:
+      - g
+      - q
+      - t
+      - w
+      - z
+      data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+      num_particles: 150
+      split_fraction:
+      - 0.7
+      - 0.15
+      - 0.15
+      particle_features:
+      - etarel
+      - phirel
+      - ptrel
+      jet_features:
+      - pt
+      - eta
+      - mass
+      - num_particles
+      - type
+  loader_kwargs:
+    pin_memory: true
+    batch_size: 256
+    num_workers: 8
+    drop_last: true
+loggers:
+  wandb:
+    _target_: pytorch_lightning.loggers.wandb.WandbLogger
+    entity: jet-diffusion
+    offline: false
+    id: idihnqp5
+    log_model: false
+    project: pc_jedi
+    name: paper_model_150
+    save_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150/
+    resume: true
+paths:
+  data_dir: /srv/beegfs/scratch/groups/rodem/anomalous_jets/virtual_data
+  output_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints
+  root_dir: /home/users/l/leighm/JetDiffusion
+  full_path: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150/
+callbacks:
+  latest_model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150//checkpoints
+    save_on_train_epoch_end: true
+    filename: last
+  best_model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/pc_jedi/paper_model_150//checkpoints
+    filename: best_{epoch:03d}
+    monitor: valid/total_loss
+    mode: min
+    save_weights_only: true
+    auto_insert_metric_name: false
+  lr_monitor:
+    _target_: pytorch_lightning.callbacks.LearningRateMonitor
+    logging_interval: step

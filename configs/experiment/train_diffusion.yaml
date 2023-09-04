@@ -1,0 +1,16 @@
+# @package _global_
+
+trainer:
+  precision: 16-mixed
+precision: medium
+
+defaults:
+  - override /model/architecture: transformer.yaml
+  # - override /model/architecture: caencoder.yaml
+
+model:
+  architecture:
+    use_lite: True
+
+project_name: new_models
+network_name: new_diffusion

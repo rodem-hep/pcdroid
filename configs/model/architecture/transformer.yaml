@@ -1,0 +1,25 @@
+_target_: src.utils.transformers.FullTransformerEncoder
+_partial_: true
+
+node_embd_config:
+  act_h: lrlu
+  nrm: layer
+ctxt_embd_config:
+  outp_dim: 64
+  act_h: lrlu
+  nrm: layer
+te_config:
+  model_dim: 256
+  num_layers: 3
+  mha_config:
+    num_heads: 16
+    init_zeros: True
+    do_layer_norm: True
+  dense_config:
+    act_h: lrlu
+    nrm: layer
+    output_init_zeros: True
+outp_embd_config:
+  act_h: lrlu
+  nrm: layer
+  output_init_zeros: True

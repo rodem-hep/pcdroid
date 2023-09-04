@@ -1,0 +1,138 @@
+seed: 12345
+project_name: flow_learning
+network_name: allshort_pt_eta_M_N__given__ID
+ckpt_path: null
+precision: high
+compile: null
+full_resume: false
+trainer:
+  _target_: pytorch_lightning.Trainer
+  min_epochs: 1
+  max_epochs: 300
+  enable_progress_bar: false
+  accelerator: auto
+  devices: auto
+  gradient_clip_val: 5
+  precision: 32
+  check_val_every_n_epoch: 10
+  default_root_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/flow_learning/allshort_pt_eta_M_N__given__ID/
+model:
+  _target_: src.models.flow.HLVFlow
+  data_dims: [3, 10, 150]
+  gen_ctxt_split: 4
+  int_dims:
+  - false
+  - false
+  - false
+  - true
+  invertible_net:
+    _target_: src.utils.flows.transforms.stacked_norm_flow
+    _partial_: true
+    nstacks: 4
+    param_func: cplng
+    invrt_func: rqs
+    net_kwargs:
+      num_blocks: 1
+      hddn_dim: 256
+      drp: 0.1
+      nrm: layer
+    rqs_kwargs:
+      num_bins: 10
+      tail_bound: 4
+      tails: linear
+    do_lu: true
+  ctxt_net:
+    _target_: src.utils.modules.DenseNetwork
+    _partial_: true
+    outp_dim: 16
+    hddn_dim: 128
+    num_blocks: 2
+    nrm: layer
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.0005
+    weight_decay: 0.0001
+  sched_config:
+    utils:
+      name: cyclicwithwarmup
+      div_factor: 50
+      epochs_per_cycle: 5
+      final_div_factor: 50
+      pct_start: 0.5
+    lightning:
+      monitor: valid/noise_loss
+      interval: step
+      frequency: 1
+datamodule:
+  _target_: src.datamodules.jet_net.JetNetDataModule
+  data_conf:
+    log_squash_pt: true
+    high_as_context: true
+    n_jets: null
+    one_hot_last: auto
+    jetnet_config:
+      jet_type:
+      - g
+      - q
+      - t
+      - w
+      - z
+      data_dir: /srv/beegfs/scratch/groups/rodem/datasets/jetnet/
+      num_particles: 150
+      split_fraction:
+      - 0.7
+      - 0.15
+      - 0.15
+      particle_features:
+      - etarel
+      - phirel
+      - ptrel
+      jet_features:
+      - pt
+      - eta
+      - mass
+      - num_particles
+      - type
+  loader_kwargs:
+    pin_memory: true
+    batch_size: 1024
+    num_workers: 0
+    drop_last: true
+loggers:
+  wandb:
+    _target_: pytorch_lightning.loggers.wandb.WandbLogger
+    entity: jet-diffusion
+    offline: false
+    id: jwdpwuzi
+    log_model: false
+    project: flow_learning
+    name: allshort_pt_eta_M_N__given__ID
+    save_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/flow_learning/allshort_pt_eta_M_N__given__ID/
+    resume: false
+paths:
+  data_dir: /srv/beegfs/scratch/groups/rodem/anomalous_jets/virtual_data
+  output_dir: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints
+  root_dir: /home/users/l/leighm/JetDiffusion
+  full_path: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/flow_learning/allshort_pt_eta_M_N__given__ID/
+callbacks:
+  latest_model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/flow_learning/allshort_pt_eta_M_N__given__ID//checkpoints
+    save_on_train_epoch_end: true
+    filename: last
+  best_model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: /srv/beegfs/scratch/groups/rodem/jet_diffusion/checkpoints/flow_learning/allshort_pt_eta_M_N__given__ID//checkpoints
+    filename: best_{epoch:03d}
+    monitor: valid/total_loss
+    mode: min
+    save_weights_only: true
+    auto_insert_metric_name: false
+    save_last: false
+  lr_monitor:
+    _target_: pytorch_lightning.callbacks.LearningRateMonitor
+    logging_interval: step
+  model_summary:
+    _target_: pytorch_lightning.callbacks.ModelSummary
+    max_depth: 4

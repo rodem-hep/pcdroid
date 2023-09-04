@@ -1,0 +1,49 @@
+_target_: src.models.flow.HLVFlow
+
+gen_ctxt_split: null
+int_dims: [False, False, False]
+
+invertible_net:
+  _target_: src.utils.flows.transforms.stacked_norm_flow
+  _partial_: True
+  nstacks: 4
+  param_func: cplng
+  invrt_func: rqs
+  net_kwargs:
+    num_blocks: 1
+    hddn_dim: 256
+    drp: 0.1
+    nrm: layer
+  rqs_kwargs:
+    num_bins: 10
+    tail_bound: 4
+    tails: linear
+  do_lu: true
+
+ctxt_net:
+  _target_: src.utils.modules.DenseNetwork
+  _partial_: True
+  outp_dim: 16
+  hddn_dim: 128
+  num_blocks: 2
+  nrm: layer
+
+# Full configuration for the model optimizer
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 5.0e-4
+  weight_decay: 1.0e-4
+
+# Config dicts to pass to utils and pytorch lightning
+sched_config:
+  utils:
+    name: cyclicwithwarmup
+    div_factor: 50
+    epochs_per_cycle: 5
+    final_div_factor: 50
+    pct_start: 0.5
+  lightning:
+    monitor: valid/noise_loss
+    interval: step
+    frequency: 1

@@ -1,0 +1,26 @@
+# @package _global_
+
+defaults:
+  - override /model: consistency.yaml
+
+trainer:
+  precision: 16-mixed
+precision: medium
+
+datamodule:
+  loader_kwargs:
+    batch_size: 256
+    num_workers: 0
+  data_conf:
+    jetnet_config:
+      num_particles: 150
+
+model:
+  teacher_checkpoint: ${paths.root_dir}/models/paper_models/pcdroid/checkpoints/best.ckpt
+
+  sampler_function:
+    _target_: src.utils.diffusion.one_step_dpm_2
+
+project_name: new_models
+network_name: new_consistency
+full_resume: True

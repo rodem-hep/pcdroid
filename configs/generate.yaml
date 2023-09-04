@@ -1,0 +1,21 @@
+# @package _global_
+
+
+num_samples: 100
+batch_size: 5
+jet_type: t
+
+generator_path: ${oc.env:PROJECT_ROOT}/models/paper_models/pcdroid
+flow_path: ${oc.env:PROJECT_ROOT}/models/paper_models/hlv_flow
+output_folder: ${oc.env:PROJECT_ROOT}/generated
+
+sampler_function:
+  _target_: k_diffusion.sampling.sample_lms
+  _partial_: True
+  disable: True
+
+sigma_function:
+  _target_: src.utils.diffusion.get_sigmas_karras
+  _partial_: True
+  n_steps: 100
+  rho: 7

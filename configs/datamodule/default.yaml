@@ -1,0 +1,34 @@
+_target_: src.datamodules.jet_net.JetNetDataModule
+
+data_conf:
+  log_squash_pt: True
+  high_as_context: True
+  n_jets: null
+  one_hot_last: auto
+
+  jetnet_config:
+    jet_type:
+      - g
+      - q
+      - t
+      - w
+      - z
+    data_dir: ${paths.data_dir}
+    num_particles: 150
+    split_fraction: [0.7, 0.15, 0.15]
+    particle_features:
+      - etarel
+      - phirel
+      - ptrel
+    jet_features:
+      - pt
+      - eta
+      - mass
+      - num_particles # Needed for the transformer to be dependant on multiplicity
+      - type # Type must always be last if present
+
+loader_kwargs:
+  pin_memory: true
+  batch_size: 256
+  num_workers: 0
+  drop_last: True

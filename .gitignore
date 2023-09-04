@@ -1,0 +1,23 @@
+# Directories
+__pycache__
+data/
+datasets/
+logs/
+outputs/
+plots/
+plots*/
+.vscode/
+container/
+slurmscripts/
+logs/
+wandb/
+latex/
+mpgan/
+
+# File types
+*.pyc
+*.ipynb
+*.out
+*.sh
+*.log
+*workspace
